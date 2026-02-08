@@ -25,10 +25,10 @@ class TestReceiver(unittest.TestCase):
         expected_substrings = [
             "POT0(Pitch):  512",
             "POT1(Pitch):  512",
-            "POT2(Yaw):  256",
-            "POT3(Roll):  768",
-            "POT4(Yaw):  100",
-            "POT5(Yaw):  900"
+            "POT2(Pitch):  256",
+            "POT3(Yaw):  768",
+            "POT4(Roll):  100",
+            "POT5(Roll):  900"
         ]
         
         for substring in expected_substrings:
@@ -36,12 +36,12 @@ class TestReceiver(unittest.TestCase):
             
         # Verify mapped values
         # P0=Pitch -> 512 * 360 / 1024 = 180.0
-        # P3=Roll -> 768 * 360 / 1024 = 270.0
-        # P2=Yaw -> 256 * 360 / 1024 = 90.0
+        # P5=Roll -> 900 * 360 / 1024 = 316.4
+        # P3=Yaw -> 768 * 360 / 1024 = 270.0
         
         self.assertAlmostEqual(controller.values['pitch'], 180.0, places=1)
-        self.assertAlmostEqual(controller.values['roll'], 270.0, places=1)
-        self.assertAlmostEqual(controller.values['yaw'], 90.0, places=1)
+        self.assertAlmostEqual(controller.values['roll'], 316.4, places=1)
+        self.assertAlmostEqual(controller.values['yaw'], 270.0, places=1)
         
         # Verify XYZ exist and are not zero (assuming non-zero angles/lengths result in non-zero pos)
         # With angles [180, 180, 90, 270, ..., ...] check if we get something valid.

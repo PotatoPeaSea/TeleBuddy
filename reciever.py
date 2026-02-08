@@ -97,7 +97,7 @@ class SerialController:
 
     def _parse_line(self, line_str):
         # Use the logic requested:
-        # P0 = pitch, P1 = pitch, P2 = yaw, P3 = roll, P4 = yaw, P5 = yaw
+        # P0=Pitch, P1=Pitch, P2=Pitch, P3=Yaw, P4=Roll, P5=Roll
         
         parts = line_str.split()
         parsed = {}
@@ -112,23 +112,23 @@ class SerialController:
         with self.lock:
             self.values["raw"] = parsed
             
-            # Use P0 for pitch, P3 for roll, P2 for yaw as primary controls for now
+            # Use P0 for pitch, P3 for Yaw, P5 for Roll as primary controls for now
             # scaling factor ~ 1024 / 360  (approx 2.84)
             
             p0 = parsed.get("POT0", 0) # Pitch
             p1 = parsed.get("POT1", 0) # Pitch
-            p2 = parsed.get("POT2", 0) # Yaw
-            p3 = parsed.get("POT3", 0) # Roll
-            p4 = parsed.get("POT4", 0) # Yaw
-            p5 = parsed.get("POT5", 0) # Yaw
+            p2 = parsed.get("POT2", 0) # Pitch
+            p3 = parsed.get("POT3", 0) # Yaw
+            p4 = parsed.get("POT4", 0) # Roll
+            p5 = parsed.get("POT5", 0) # Roll
             
             # Map raw values to degrees (0-360)
             self.values["pitch"] = p0 * 360 / 1024
-            self.values["roll"]  = p3 * 360 / 1024  # P3 is Roll per request
-            self.values["yaw"]   = p2 * 360 / 1024  # P2 is Yaw per request
+            self.values["roll"]  = p5 * 360 / 1024  # P5 is Roll (tip)
+            self.values["yaw"]   = p3 * 360 / 1024  # P3 is Yaw
             
             # Calculate tip position using forward kinematics
-            # Angles list: [p0, p1, p2, p3, p4, p5] mapped as [Pitch, Pitch, Yaw, Roll, Yaw, Yaw]
+            # Angles list: [p0, p1, p2, p3, p4, p5] mapped as [Pitch, Pitch, Pitch, Yaw, Roll, Roll]
             # Convert raw 0-1024 to degrees 0-360
             scaler = 360 / 1024
             angles_deg = [
@@ -150,14 +150,14 @@ class SerialController:
 
     def _format_output(self, values):
         """Format potentiometer values into a readable string with labels."""
-        # P0=pitch, P1=pitch, P2=yaw, P3=roll, P4=yaw, P5=yaw
+        # P0=Pitch, P1=Pitch, P2=Pitch, P3=Yaw, P4=Roll, P5=Roll
         labels = {
             "POT0": "Pitch",
             "POT1": "Pitch",
-            "POT2": "Yaw",
-            "POT3": "Roll",
-            "POT4": "Yaw",
-            "POT5": "Yaw"
+            "POT2": "Pitch",
+            "POT3": "Yaw",
+            "POT4": "Roll",
+            "POT5": "Roll"
         }
         
         keys = [f"POT{i}" for i in range(6)]
@@ -168,7 +168,7 @@ class SerialController:
             # Format: 'POT0(Pitch): 123'
             output_parts.append(f"{k}({label}): {str(val):>4}")
             
-        return " | ".join(output_parts) + f" | XYZ: ({values.get('x', 0):.2f}, {values.get('y', 0):.2f}, {values.get('z', 0):.2f})"
+        return " | ".join(output_parts) + f" | XYZ: ({self.values.get('x', 0):.2f}, {self.values.get('y', 0):.2f}, {self.values.get('z', 0):.2f})"
 
     def get_orientation(self):
         with self.lock:

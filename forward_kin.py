@@ -6,7 +6,7 @@ def calculate_tip_xy(angles, lengths):
     
     Args:
         angles (list): [p0, p1, p2, p3, p4, p5] in degrees.
-            where [pitch, pitch, yaw, roll, yaw, yaw]
+            where [pitch, pitch, pitch, yaw, roll, roll]
         lengths (list): [L1, L2, L3, L4, L5, L6] lengths of each arm segment.
         
     Returns:
@@ -16,9 +16,8 @@ def calculate_tip_xy(angles, lengths):
     # 1. Convert degrees to radians
     rads = np.radians(angles)
     
-    # Unpack angles for clarity
     # Mapping based on your prompt:
-    # p0=Pitch, p1=Pitch, p2=Yaw, p3=Roll, p4=Yaw, p5=Yaw
+    # p0=Pitch, p1=Pitch, p2=Pitch, p3=Yaw, p4=Roll, p5=Roll
     th = rads # th[0] is p0, th[1] is p1, etc.
     
     # 2. Define Helper Matrices for Rotation (Rot) and Translation (Trans)
@@ -67,15 +66,15 @@ def calculate_tip_xy(angles, lengths):
 
     # 3. Compute Transformations for each joint
     # Your Mapping:
-    # p0 (Pitch -> Y), p1 (Pitch -> Y), p2 (Yaw -> Z)
-    # p3 (Roll  -> X), p4 (Yaw   -> Z), p5 (Yaw -> Z)
+    # p0 (Pitch -> Y), p1 (Pitch -> Y), p2 (Pitch -> Y)
+    # p3 (Yaw   -> Z), p4 (Roll  -> X), p5 (Roll  -> X)
     
     T0 = get_tf(th[0], 'y', lengths[0])
     T1 = get_tf(th[1], 'y', lengths[1])
-    T2 = get_tf(th[2], 'z', lengths[2])
-    T3 = get_tf(th[3], 'x', lengths[3]) # 'Row' -> Roll
-    T4 = get_tf(th[4], 'z', lengths[4])
-    T5 = get_tf(th[5], 'z', lengths[5])
+    T2 = get_tf(th[2], 'y', lengths[2])
+    T3 = get_tf(th[3], 'z', lengths[3]) 
+    T4 = get_tf(th[4], 'x', lengths[4])
+    T5 = get_tf(th[5], 'x', lengths[5])
 
     # 4. Chain the transformations (Forward Kinematics)
     # Global Transform = T0 * T1 * T2 * T3 * T4 * T5
@@ -94,7 +93,7 @@ def calculate_tip_xy(angles, lengths):
 # --- Example Usage ---
 
 # Define 6 angles (degrees)
-# p0=pitch, p1=pitch, p2=yaw, p3=roll, p4=yaw, p5=yaw
+# p0=pitch, p1=pitch, p2=pitch, p3=yaw, p4=roll, p5=roll
 my_angles = [0, 45, 0, 0, 0, 0] 
 
 # Define 6 link lengths (e.g., cm)
