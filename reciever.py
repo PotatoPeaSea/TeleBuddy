@@ -3,6 +3,10 @@ import time
 import sys
 import serial
 from serial.tools import list_ports
+from forward_kin import calculate_tip_xy
+
+# Dummy lengths for the arm segments (L1-L6)
+DUMMY_LENGTHS = [10, 10, 10, 5, 5, 2]
 
 class SerialController:
     def __init__(self, port=None, baud=115200):
@@ -20,6 +24,9 @@ class SerialController:
             "pitch": 0.0,
             "roll": 0.0,
             "yaw": 0.0,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
             "raw": {}
         }
         
@@ -120,6 +127,24 @@ class SerialController:
             self.values["roll"]  = p3 * 360 / 1024  # P3 is Roll per request
             self.values["yaw"]   = p2 * 360 / 1024  # P2 is Yaw per request
             
+            # Calculate tip position using forward kinematics
+            # Angles list: [p0, p1, p2, p3, p4, p5] mapped as [Pitch, Pitch, Yaw, Roll, Yaw, Yaw]
+            # Convert raw 0-1024 to degrees 0-360
+            scaler = 360 / 1024
+            angles_deg = [
+                p0 * scaler,
+                p1 * scaler,
+                p2 * scaler,
+                p3 * scaler,
+                p4 * scaler,
+                p5 * scaler
+            ]
+            
+            x, y, z = calculate_tip_xy(angles_deg, DUMMY_LENGTHS)
+            self.values["x"] = x
+            self.values["y"] = y
+            self.values["z"] = z
+            
             # Print formatted output
             print(self._format_output(parsed))
 
@@ -143,14 +168,17 @@ class SerialController:
             # Format: 'POT0(Pitch): 123'
             output_parts.append(f"{k}({label}): {str(val):>4}")
             
-        return " | ".join(output_parts)
+        return " | ".join(output_parts) + f" | XYZ: ({values.get('x', 0):.2f}, {values.get('y', 0):.2f}, {values.get('z', 0):.2f})"
 
     def get_orientation(self):
         with self.lock:
             return {
                 "pitch": self.values["pitch"],
                 "roll": self.values["roll"],
-                "yaw": self.values["yaw"]
+                "yaw": self.values["yaw"],
+                "x": self.values["x"],
+                "y": self.values["y"],
+                "z": self.values["z"]
             }
 
 if __name__ == "__main__":

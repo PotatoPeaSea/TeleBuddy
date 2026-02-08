@@ -99,6 +99,33 @@ def update():
         iron_pivot.rotation_x = p
         iron_pivot.rotation_z = r
         iron_pivot.rotation_y = y
+        
+        # Apply translation from Forward Kinematics
+        # The calculated values might need scaling/offsetting to fit the game world.
+        # For now, we apply them directly or with a small scale if needed.
+        # Assuming units in 'cm' from forward_kin, we might need to scale to Ursina units.
+        # Let's assume 1 cm = 1 unit for now, or maybe 0.1 if it's too big.
+        # The user said "generate dummy lengths to feed in", so we can tweak lengths or scale here.
+        
+        raw_x = data.get('x', 0)
+        raw_y = data.get('y', 0)
+        raw_z = data.get('z', 0)
+        
+        # Mapping FK coordinates to Game World coordinates
+        # FK frame: X=forward?, Y=up?, Z=side? -> Depends on forward_kin definition.
+        # Looking at forward_kin.py:
+        # T_trans uses [1, 0, 0, length] so translation is along local X.
+        # T0 rotates around Y (Pitch).
+        # T3 rotates around X (Roll).
+        # It seems the base frame has Z up, or Y up depending on T0.
+        # Let's map directly for now and see (or just user requested "reflect calculated xyz values").
+        
+        # Scaling down slightly as 10+10+10=30 units is huge in Ursina (default cam is at y=7, z=-10 approx)
+        scale_factor = 0.1 
+        
+        iron_pivot.x = raw_x * scale_factor
+        iron_pivot.y = raw_y * scale_factor + 1 # +1 to keep it above ground like the original y=1
+        iron_pivot.z = raw_z * scale_factor
     
     # Keyboard fallback / WASD Control for testing
     rot_speed = 50 * time.dt

@@ -42,6 +42,13 @@ class TestReceiver(unittest.TestCase):
         self.assertAlmostEqual(controller.values['pitch'], 180.0, places=1)
         self.assertAlmostEqual(controller.values['roll'], 270.0, places=1)
         self.assertAlmostEqual(controller.values['yaw'], 90.0, places=1)
+        
+        # Verify XYZ exist and are not zero (assuming non-zero angles/lengths result in non-zero pos)
+        # With angles [180, 180, 90, 270, ..., ...] check if we get something valid.
+        self.assertIn('x', controller.values)
+        self.assertIn('y', controller.values)
+        self.assertIn('z', controller.values)
+        print(f"Calculated XYZ: {controller.values['x']}, {controller.values['y']}, {controller.values['z']}")
 
 if __name__ == '__main__':
     unittest.main()

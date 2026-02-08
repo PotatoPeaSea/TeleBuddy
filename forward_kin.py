@@ -100,7 +100,8 @@ my_angles = [0, 45, 0, 0, 0, 0]
 # Define 6 link lengths (e.g., cm)
 my_lengths = [10, 10, 10, 5, 5, 2]
 
-x, y = calculate_tip_xy(my_angles, my_lengths)
+x, y, z = calculate_tip_xy(my_angles, my_lengths)
 
 print(f"Tip X Coordinate: {x:.2f}")
 print(f"Tip Y Coordinate: {y:.2f}")
+print(f"Tip Z Coordinate: {z:.2f}")
