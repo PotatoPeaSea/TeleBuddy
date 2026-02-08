@@ -33,12 +33,38 @@ hot_zone = Entity(parent=iron_tip, model='sphere', scale=0.2, z=0.5, color=color
 
 # Solder Target
 pcb = Entity(model='plane', scale=(4, 1, 4), color=color.black, texture='white_cube', y=0.01)
-pad = Entity(parent=pcb, model='circle', scale=0.2, color=color.gold, y=0.02, z=0)
-solder_blob = Entity(parent=pad, model='sphere', scale=0.5, color=color.light_gray, y=0.2, visible=False)
+
+# 4x4 Grid of Holes
+holes = []
+grid_size = 4
+spacing = 0.5
+start_x = -(grid_size - 1) * spacing / 2
+start_z = -(grid_size - 1) * spacing / 2
+
+for r in range(grid_size):
+    row_holes = []
+    for c in range(grid_size):
+        x = start_x + c * spacing
+        z = start_z + r * spacing
+        # Create hole entity
+        hole = Entity(
+            parent=pcb,
+            model='circle',
+            scale=0.15,
+            color=color.red, # Initial color
+            y=0.02,
+            x=x,
+            z=z,
+            collider='box'
+        )
+        # Store metadata on the entity itself for easy access
+        hole.grid_pos = (r, c)
+        hole.is_soldered = False
+        row_holes.append(hole)
+    holes.append(row_holes)
 
 # Game State
 class GameState:
-    soldered = False
     heat_timer = 0.0
 
 state = GameState()
@@ -73,27 +99,44 @@ def update():
     if held_keys['e']: iron_pivot.rotation_y += speed
 
     # Simulation Logic
-    # Check distance between iron tip hot zone and pad
-    # World position conversion needed
+    # Check distance between iron tip hot zone and holes
     tip_pos = hot_zone.world_position
-    pad_pos = pad.world_position
     
-    distance = distance_2d(tip_pos, pad_pos) # planar distance
-    height_diff = abs(tip_pos.y - pad_pos.y)
+    # Reset heat timer by default, will accumulate if touching *any* unsoldered hole
+    touching_any = False
 
-    if distance < 0.2 and height_diff < 0.2:
-        state.heat_timer += time.dt
-        iron_tip.color = color.red
-        if state.heat_timer > 2.0 and not state.soldered:
-            state.soldered = True
-            solder_blob.visible = True
-            print("Soldered Configured!")
-    else:
-        state.heat_timer = max(0, state.heat_timer - time.dt)
+    for r in range(grid_size):
+        for c in range(grid_size):
+            hole = holes[r][c]
+            if hole.is_soldered:
+                continue
+
+            pad_pos = hole.world_position
+            distance = distance_2d(tip_pos, pad_pos) # planar distance
+            height_diff = abs(tip_pos.y - pad_pos.y)
+
+            # Check collision
+            if distance < 0.15 and height_diff < 0.2:
+                touching_any = True
+                iron_tip.color = color.red
+                
+                # Instant soldering on contact as per request ("change color... on initial contact")
+                # Or we can keep the heat timer. The prompt said "on initial contact change the color".
+                # Let's start with instant for responsiveness, or a very short timer.
+                # User asked: "when the soldering iron tip comes in xyz contact to the holes change the color to the holes from red to green on initial contact"
+                
+                hole.color = color.green
+                hole.is_soldered = True
+                print(f"Contact with hole [{r}, {c}]")
+                
+                # Optional: Add a solder blob visual if needed, but color change was specific request.
+                
+    if not touching_any:
         iron_tip.color = color.gray
+        state.heat_timer = 0.0
 
     # Update Status Text
-    status_text.text = f"Pitch: {iron_pivot.rotation_x:.1f}\nRoll: {iron_pivot.rotation_z:.1f}\nYaw: {iron_pivot.rotation_y:.1f}\nHeat: {state.heat_timer:.1f}"
+    status_text.text = f"Pitch: {iron_pivot.rotation_x:.1f}\nRoll: {iron_pivot.rotation_z:.1f}\nYaw: {iron_pivot.rotation_y:.1f}"
 
 def distance_2d(p1, p2):
     return ((p1.x - p2.x)**2 + (p1.z - p2.z)**2)**0.5
