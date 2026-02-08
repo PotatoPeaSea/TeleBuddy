@@ -37,8 +37,10 @@ editor_camera.rotation = (90, 0, 0) # Look down
 iron_pivot = Entity(y=1, z=-2)
 
 iron = Entity(parent=iron_pivot, model='cube', scale=(0.2, 0.2, 1.5), color=color.orange, origin_z=-0.5)
-iron_tip = Entity(parent=iron, model='cone', scale=0.8, z=0.8, color=color.gray, rotation_x=90)
-hot_zone = Entity(parent=iron_tip, model='sphere', scale=0.2, z=0.5, color=color.red, alpha=0.5)
+# Make tip more obvious: sharper cone, metallic color
+iron_tip = Entity(parent=iron, model='cone', scale=(0.8, 0.8, 2), z=0.75, color=color.light_gray, rotation_x=90)
+# Hot zone visual - bright emissive sphere at the very tip
+hot_zone = Entity(parent=iron_tip, model='sphere', scale=0.3, z=0.5, color=color.red, emissive=True)
 
 # Solder Target
 pcb = Entity(model='plane', scale=(4, 1, 4), color=color.black, texture='white_cube', y=0.01)
@@ -58,9 +60,9 @@ for r in range(grid_size):
         # Create hole entity
         hole = Entity(
             parent=pcb,
-            model='circle',
+            model='sphere',
             scale=0.15,
-            color=color.red, # Initial color
+            color=color.red, # Initial color dark to look like a hole
             y=0.02,
             x=x,
             z=z,
@@ -99,13 +101,22 @@ def update():
         iron_pivot.rotation_y = y
     
     # Keyboard fallback / WASD Control for testing
-    speed = 50 * time.dt
-    if held_keys['w']: iron_pivot.rotation_x += speed
-    if held_keys['s']: iron_pivot.rotation_x -= speed
-    if held_keys['a']: iron_pivot.rotation_z += speed
-    if held_keys['d']: iron_pivot.rotation_z -= speed
-    if held_keys['q']: iron_pivot.rotation_y -= speed
-    if held_keys['e']: iron_pivot.rotation_y += speed
+    rot_speed = 50 * time.dt
+    move_speed = 2 * time.dt
+    
+    # Rotation
+    if held_keys['w']: iron_pivot.rotation_x += rot_speed
+    if held_keys['s']: iron_pivot.rotation_x -= rot_speed
+    if held_keys['a']: iron_pivot.rotation_z += rot_speed
+    if held_keys['d']: iron_pivot.rotation_z -= rot_speed
+    if held_keys['q']: iron_pivot.rotation_y -= rot_speed
+    if held_keys['e']: iron_pivot.rotation_y += rot_speed
+    
+    # Movement (XY Plane)
+    if held_keys['up arrow']: iron_pivot.z += move_speed
+    if held_keys['down arrow']: iron_pivot.z -= move_speed
+    if held_keys['left arrow']: iron_pivot.x -= move_speed
+    if held_keys['right arrow']: iron_pivot.x += move_speed
 
     # Simulation Logic
     # Check distance between iron tip hot zone and holes
