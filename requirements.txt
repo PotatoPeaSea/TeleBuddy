@@ -1,2 +1,3 @@
 ursina
 pyserial
+numpy
