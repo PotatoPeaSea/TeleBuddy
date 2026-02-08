@@ -1,0 +1,47 @@
+import sys
+import unittest
+from io import StringIO
+from reciever import SerialController
+
+class TestReceiver(unittest.TestCase):
+    def test_parsing_and_formatting(self):
+        controller = SerialController()
+        
+        # Capture stdout
+        captured_output = StringIO()
+        original_stdout = sys.stdout
+        sys.stdout = captured_output
+        
+        test_line = "POT0:512 POT1:512 POT2:256 POT3:768 POT4:100 POT5:900"
+        try:
+            controller._parse_line(test_line)
+        finally:
+            sys.stdout = original_stdout
+            
+        output = captured_output.getvalue().strip()
+        print(f"Captured output: {output}")
+        
+        # Verify keys and labels
+        expected_substrings = [
+            "POT0(Pitch):  512",
+            "POT1(Pitch):  512",
+            "POT2(Yaw):  256",
+            "POT3(Roll):  768",
+            "POT4(Yaw):  100",
+            "POT5(Yaw):  900"
+        ]
+        
+        for substring in expected_substrings:
+            self.assertIn(substring, output)
+            
+        # Verify mapped values
+        # P0=Pitch -> 512 * 360 / 1024 = 180.0
+        # P3=Roll -> 768 * 360 / 1024 = 270.0
+        # P2=Yaw -> 256 * 360 / 1024 = 90.0
+        
+        self.assertAlmostEqual(controller.values['pitch'], 180.0, places=1)
+        self.assertAlmostEqual(controller.values['roll'], 270.0, places=1)
+        self.assertAlmostEqual(controller.values['yaw'], 90.0, places=1)
+
+if __name__ == '__main__':
+    unittest.main()
