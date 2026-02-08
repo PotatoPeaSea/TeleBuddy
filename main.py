@@ -23,6 +23,15 @@ controller.start()
 # Scene Setup
 ground = Entity(model='plane', scale=(10, 1, 10), color=color.gray.tint(-.2), texture='white_cube', texture_scale=(10,10), collider='box')
 
+# Camera Control
+# EditorCamera allows orbiting with Right Mouse Button, Panning with Middle Mouse, and Zooming with Scroll Wheel.
+# To use Left Mouse Button for rotation (better for trackpads), we can set specific keys or use a custom script,
+# but EditorCamera is the quickest standard way.
+editor_camera = EditorCamera()
+editor_camera.position = (0, 7, 0) # Start high
+editor_camera.rotation = (90, 0, 0) # Look down
+
+
 # Soldering Iron Representation
 # Pivot point for rotation
 iron_pivot = Entity(y=1, z=-2)
